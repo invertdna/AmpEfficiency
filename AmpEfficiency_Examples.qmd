@@ -1,0 +1,130 @@
+---
+title: "Easily Estimating Amplification Efficiencies to Calibrate Metabarcoding Results"
+author: "Kelly"
+format: html
+editor: visual
+---
+
+Metabarcoding depends fundamentally on PCR from mixed-template samples. Where templates differ at primer-binding sites, they have different amplification efficiencies, and because of the exponential nature of PCR, this can result in massive observation biases. As a result, pre- and post-PCR community compositions often differ radically, which is a critical challenge for researchers trying to estimate community composition from observations of metabarcoding sequences. Thus, correcting for these amplification biases is highly desirable.
+
+Mock communities – in which a sample having known proportions of species' molecules is subjected to amplifiation and sequencing – are the most common method of estimating these observation biases. However, creating mock communities is labor-intensive and requires tissue or another source of pure sample for each relevant species; consequently, it is often intractable to create a mock community speaking to a given research aim.
+
+For a given primer-template pair, amplification efficiency is largely driven by thermodynamics; the binding energy of nucleotide-pairing interactions makes amplification via PCR more or less energetically efficient, and thus more or less likely to occur under a given set of PCR conditions.
+
+Here, we provide a tool to easily estimate this binding energy for a given primer-template pair based upon the number, identity, and position of primer-template mismatches. The resulting point estimates of binding energy predict well the observed behavior of primer-template matches in the lab, overall explaining much of observed variation in real-world datasets.
+
+```{r}
+#| echo: false
+
+library(tidyverse)
+library(here)
+library(insect)
+set.seed(120)
+
+#load 
+source(here("code/core_binding_energy_functions.r")) 
+#pre-compiled vertebrate mtDNA genomes, and associated taxonomy
+taxbase <- read.csv(here("data/sample_mt_taxonomy.csv"))
+fa <- readFASTA(here("data/sample_mt_genomes.fasta"), bin = F)
+
+#common metabarcoding primers
+primers <- read.csv(here("data/common_mb_primers.csv"))
+
+#MFU primers
+forward_primer <- primers$sequence[1]
+reverse_primer <- primers$sequence[2]
+
+#simulate some data for analysis
+Nreads_matrix <- matrix(NA, nrow = 5, ncol = 10)
+for (i in 1:nrow(Nreads_matrix)){
+  Nreads_matrix[i,] <- rnbinom(ncol(Nreads_matrix), size = 1, mu = 1000)
+}
+species_names <- taxbase$species
+species_templates <- fa[match(species_names, taxbase$species)]
+
+```
+
+Additive model of binding energy
+
+MM penalty exponential as approaching the 3' end
+
+dinucleotide MM penalties given by nearest neighbor (SantaLucia)
+
+ambiguities in primers averaged over
+
+The binding-energy model is as follows:
+
+ΔG(i) = ΔG_dinucleotide_bases + P_3prime
+
+DeltaG is first calculated in absolute terms, and then within a set of observations, scaled by subtracting the minimum observed deltaG across taxa. Gamma = deltaG - min(deltaG), such that the taxon w min binding energy has gamma = 0.
+
+We then calibrate the slope of the relationship between alpha (amplification efficiency sensu Shelton et al. 2022) and gamma by fitting a linear model relating the two and constraining the intercept to be zero (such that, within a set of observations, the max amp efficiency occurs in the taxon with minimum binding energy). We then use the resulting slope to map the value of deltaG for any given taxon onto a predicted amplification efficiency, alpha.
+
+We can do this across vertebrate taxa, for example, to estimate the amp efficiencies of any given taxon or group, relative to one with perfect amp efficiency.
+
+This demonstrates, for example, much more even efficiency across the MarVer primer set vs. the MiFish primer set; both primer sets are in the 12S region of the mitochondrion and partially overlap in position.
+
+```{r}
+#| echo: false
+
+mt_df_mifish <- read.csv(here("model_output/vert_mt_results_mifish.csv")) 
+
+mt_df_mifish %>% 
+filter(!is.na(class),
+         deltaG < 0 ) %>% 
+  ggplot(aes(y = est_alpha, x = class)) +
+    geom_boxplot(aes(fill = class), outlier.alpha = .2) +
+    #geom_violin(scale = "width")
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+    ggtitle("MiFish")
+
+
+
+
+mt_df_marver <- read.csv(here("model_output/vert_mt_results_marver.csv")) 
+
+mt_df_marver %>% 
+filter(!is.na(class),
+         deltaG < 0 ) %>% 
+  ggplot(aes(y = est_alpha, x = class)) +
+    geom_boxplot(aes(fill = class), outlier.alpha = .2) +
+    #geom_violin(scale = "width")
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+    ggtitle("MiFish")
+```
+
+A worked example of observed vs expected proportions
+
+Black dots indicate observed proportions within a sample; colored dots represent values corrected for amplification bias. Error bars represent approx. 95% CI given a standard error of 0.01 on alpha estimates.
+
+```{r}
+#| echo: false
+
+q <- correct_proportions(Nreads_matrix = Nreads_matrix,
+                         species_names = species_names,
+                         species_templates = species_templates,
+                         forward_primer = forward_primer,
+                         reverse_primer = reverse_primer,
+                         Npcr = 40
+)
+
+#observed vs. estimated
+q$estimated_proportions %>%
+  ggplot(aes(x = sample, y = estimated_proportion, color = species)) +
+  geom_point() +
+  geom_point(aes(x = sample, y = observed_proportions), color = "black") +
+  geom_segment(aes(x = sample, xend = sample, y = proportion_lo, yend = proportion_hi, color = species), alpha = 0.5) +
+  facet_wrap(~species)
+q$estimated_proportions %>%
+  ggplot(aes(x = species, y = estimated_proportion, color = species)) +
+  geom_point() +
+  geom_point(aes(x = species, y = observed_proportions), color = "black") +
+  geom_segment(aes(x = species, xend = species, y = proportion_lo, yend = proportion_hi, color = species), alpha = 0.5) +
+  facet_wrap(~sample) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+```
+
+### TO DO:
+
+full simulation from the ground up, looking at model fit.
