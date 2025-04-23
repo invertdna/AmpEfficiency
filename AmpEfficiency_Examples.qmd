@@ -90,7 +90,7 @@ filter(!is.na(class),
     geom_boxplot(aes(fill = class), outlier.alpha = .2) +
     #geom_violin(scale = "width")
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-    ggtitle("MiFish")
+    ggtitle("MarVer")
 ```
 
 A worked example of observed vs expected proportions
