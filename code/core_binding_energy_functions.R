@@ -5,96 +5,39 @@
 
 #Dinucleotide Binding Energy Matrix (ΔG37 in kcal/mol)
 create_binding_energy_matrix <- function() {
-  dinucleotides <- c("AA", "AC", "AG", "AT", "CA", "CC", "CG", "CT", 
-                     "GA", "GC", "GG", "GT", "TA", "TC", "TG", "TT")
   
-  # Create empty 16x16 matrix with named rows and columns
-  matrix_data <- matrix(0, nrow = 16, ncol = 16)
-  rownames(matrix_data) <- dinucleotides
-  colnames(matrix_data) <- dinucleotides
+  # Define the row and column names
+  labels <- c("AA","AC","AG","AT","CA","CC","CG","CT","GA","GC","GG","GT","TA","TC","TG","TT")
   
-  # Fill in the matrix with the corrected ΔG37 values (kcal/mol)
-  matrix_data["AA", "AA"] <- 0.91; matrix_data["AA", "AC"] <- 1.50; matrix_data["AA", "AG"] <- 1.20; matrix_data["AA", "AT"] <- 0.70
-  matrix_data["AA", "CA"] <- 1.50; matrix_data["AA", "CC"] <- 1.50; matrix_data["AA", "CG"] <- 1.20; matrix_data["AA", "CT"] <- 0.70
-  matrix_data["AA", "GA"] <- 1.20; matrix_data["AA", "GC"] <- 1.20; matrix_data["AA", "GG"] <- 1.20; matrix_data["AA", "GT"] <- 0.70
-  matrix_data["AA", "TA"] <- 0.70; matrix_data["AA", "TC"] <- 0.70; matrix_data["AA", "TG"] <- 0.70; matrix_data["AA", "TT"] <- -1.00
+  # Fill the matrix row-by-row
+  values <- matrix(c(
+    4.5, 4.5, 4.5, 1.46, 4.5, 4.5, 4.5, 1.46, 4.5, 4.5, 4.5, 1.46, 1.46, 1.46, 1.46, -1.58,
+    4.5, 4.5, 2.5, 4.5, 4.5, 4.5, 1.46, 4.5, 4.5, 4.5, 2.5, 4.5, 1.46, 1.46, -4.05, 2.5,
+    4.5, 2.5, 4.5, 4.5, 4.5, 1.46, 4.5, 4.5, 4.5, 2.5, 4.5, 4.5, 1.46, -4.05, 2.5, 4.5,
+    1.46, 4.5, 4.5, 4.5, 1.46, 4.5, 0.9, 4.5, 1.46, 4.5, 4.5, 4.5, -1.58, 2.5, 2.5, 1.46,
+    
+    4.5, 4.5, 4.5, 1.46, 4.5, 4.5, 4.5, 1.46, 2.5, 2.5, 2.5, -4.05, 4.5, 4.5, 4.5, 1.46,
+    4.5, 4.5, 1.46, 4.5, 4.5, 4.5, 2.5, 4.5, 2.5, 2.5, -6.52, 1.46, 4.5, 4.5, 1.46, 4.5,
+    4.5, 1.46, 4.5, 0.9, 4.5, 2.5, 4.5, 4.5, 2.5, -6.52, 2.5, 1.46, 4.5, 1.46, 4.5, 4.5,
+    1.46, 4.5, 4.5, 4.5, 1.46, 4.5, 4.5, 4.5, -4.05, 1.46, 1.46, 1.46, 2.5, 4.5, 4.5, 4.5,
+    
+    4.5, 4.5, 4.5, 1.46, 1.46, 1.46, 2.5, -4.05, 4.5, 4.5, 4.5, 2.5, 4.5, 4.5, 4.5, 2.5,
+    4.5, 4.5, 2.5, 4.5, 1.46, 2.5, -6.52, 1.46, 4.5, 4.5, 2.5, 4.5, 4.5, 4.5, 4.5, 4.5,
+    4.5, 2.5, 4.5, 4.5, 1.46, -6.52, 1.46, 1.46, 4.5, 1.46, 4.5, 4.5, 4.5, 2.5, 4.5, 4.5,
+    1.46, 4.5, 4.5, 4.5, -4.05, 2.5, 2.5, 2.5, 2.5, 4.5, 4.5, 4.5, 2.5, 4.5, 4.5, 4.5,
+    
+    1.46, 1.46, 1.46, -1.58, 4.5, 4.5, 4.5, 2.5, 4.5, 4.5, 4.5, 2.5, 4.5, 4.5, 4.5, 2.5,
+    1.46, 1.46, -4.05, 2.5, 4.5, 4.5, 2.5, 4.5, 4.5, 2.5, 2.5, 4.5, 4.5, 4.5, 1.46, 4.5,
+    1.46, -4.05, 2.5, 2.5, 4.5, 4.5, 4.5, 4.5, 4.5, 2.5, 4.5, 4.5, 4.5, 2.5, 4.5, 4.5,
+    -1.58, 2.5, 2.5, 1.46, 1.46, 4.5, 4.5, 4.5, 2.5, 4.5, 4.5, 4.5, 2.5, 4.5, 4.5, 4.5), 
+    nrow = 16, ncol = 16, byrow = TRUE)
   
-  matrix_data["AC", "AA"] <- 1.50; matrix_data["AC", "AC"] <- 1.50; matrix_data["AC", "AG"] <- 0.70; matrix_data["AC", "AT"] <- 1.20
-  matrix_data["AC", "CA"] <- 0.83; matrix_data["AC", "CC"] <- 1.50; matrix_data["AC", "CG"] <- 0.70; matrix_data["AC", "CT"] <- 1.20
-  matrix_data["AC", "GA"] <- 1.20; matrix_data["AC", "GC"] <- 1.20; matrix_data["AC", "GG"] <- 0.70; matrix_data["AC", "GT"] <- 0.65
-  matrix_data["AC", "TA"] <- 0.70; matrix_data["AC", "TC"] <- 0.70; matrix_data["AC", "TG"] <- -1.50; matrix_data["AC", "TT"] <- 0.70
+  # Assign row and column names
+  rownames(values) <- labels
+  colnames(values) <- labels
   
-  matrix_data["AG", "AA"] <- 1.20; matrix_data["AG", "AC"] <- 0.70; matrix_data["AG", "AG"] <- 1.50; matrix_data["AG", "AT"] <- 0.90
-  matrix_data["AG", "CA"] <- 1.20; matrix_data["AG", "CC"] <- 0.70; matrix_data["AG", "CG"] <- 1.50; matrix_data["AG", "CT"] <- 0.90
-  matrix_data["AG", "GA"] <- 0.08; matrix_data["AG", "GC"] <- 0.70; matrix_data["AG", "GG"] <- 1.20; matrix_data["AG", "GT"] <- 0.90
-  matrix_data["AG", "TA"] <- 0.70; matrix_data["AG", "TC"] <- -1.50; matrix_data["AG", "TG"] <- 0.70; matrix_data["AG", "TT"] <- 0.40
-  
-  matrix_data["AT", "AA"] <- 0.70; matrix_data["AT", "AC"] <- 1.20; matrix_data["AT", "AG"] <- 0.90; matrix_data["AT", "AT"] <- 1.50
-  matrix_data["AT", "CA"] <- 0.70; matrix_data["AT", "CC"] <- 1.20; matrix_data["AT", "CG"] <- 0.90; matrix_data["AT", "CT"] <- 1.50
-  matrix_data["AT", "GA"] <- 0.70; matrix_data["AT", "GC"] <- 1.20; matrix_data["AT", "GG"] <- 0.90; matrix_data["AT", "GT"] <- 1.20
-  matrix_data["AT", "TA"] <- -0.88; matrix_data["AT", "TC"] <- 0.70; matrix_data["AT", "TG"] <- 0.40; matrix_data["AT", "TT"] <- 0.70
-  
-  matrix_data["CA", "AA"] <- 1.50; matrix_data["CA", "AC"] <- 0.75; matrix_data["CA", "AG"] <- 1.20; matrix_data["CA", "AT"] <- 0.70
-  matrix_data["CA", "CA"] <- 1.50; matrix_data["CA", "CC"] <- 1.50; matrix_data["CA", "CG"] <- 1.20; matrix_data["CA", "CT"] <- 0.70
-  matrix_data["CA", "GA"] <- 0.70; matrix_data["CA", "GC"] <- 0.70; matrix_data["CA", "GG"] <- 0.70; matrix_data["CA", "GT"] <- -1.45
-  matrix_data["CA", "TA"] <- 1.20; matrix_data["CA", "TC"] <- 1.20; matrix_data["CA", "TG"] <- 0.58; matrix_data["CA", "TT"] <- 0.70
-  
-  matrix_data["CC", "AA"] <- 1.50; matrix_data["CC", "AC"] <- 1.50; matrix_data["CC", "AG"] <- 0.70; matrix_data["CC", "AT"] <- 1.20
-  matrix_data["CC", "CA"] <- 1.50; matrix_data["CC", "CC"] <- 1.05; matrix_data["CC", "CG"] <- 0.70; matrix_data["CC", "CT"] <- 1.20
-  matrix_data["CC", "GA"] <- 0.70; matrix_data["CC", "GC"] <- 0.70; matrix_data["CC", "GG"] <- -1.50; matrix_data["CC", "GT"] <- 0.70
-  matrix_data["CC", "TA"] <- 1.20; matrix_data["CC", "TC"] <- 1.20; matrix_data["CC", "TG"] <- 0.70; matrix_data["CC", "TT"] <- 1.20
-  
-  matrix_data["CG", "AA"] <- 1.20; matrix_data["CG", "AC"] <- 0.70; matrix_data["CG", "AG"] <- 1.50; matrix_data["CG", "AT"] <- 0.90
-  matrix_data["CG", "CA"] <- 1.20; matrix_data["CG", "CC"] <- 0.70; matrix_data["CG", "CG"] <- 1.50; matrix_data["CG", "CT"] <- 0.90
-  matrix_data["CG", "GA"] <- 0.70; matrix_data["CG", "GC"] <- -2.17; matrix_data["CG", "GG"] <- 0.70; matrix_data["CG", "GT"] <- 0.40
-  matrix_data["CG", "TA"] <- 1.20; matrix_data["CG", "TC"] <- 0.70; matrix_data["CG", "TG"] <- 1.20; matrix_data["CG", "TT"] <- 0.90
-  
-  matrix_data["CT", "AA"] <- 0.70; matrix_data["CT", "AC"] <- 1.20; matrix_data["CT", "AG"] <- 0.90; matrix_data["CT", "AT"] <- 1.50
-  matrix_data["CT", "CA"] <- 0.70; matrix_data["CT", "CC"] <- 1.20; matrix_data["CT", "CG"] <- 0.90; matrix_data["CT", "CT"] <- 1.50
-  matrix_data["CT", "GA"] <- -1.28; matrix_data["CT", "GC"] <- 0.70; matrix_data["CT", "GG"] <- 0.40; matrix_data["CT", "GT"] <- 0.70
-  matrix_data["CT", "TA"] <- 0.70; matrix_data["CT", "TC"] <- 0.72; matrix_data["CT", "TG"] <- 0.90; matrix_data["CT", "TT"] <- 1.20
-  
-  matrix_data["GA", "AA"] <- 1.20; matrix_data["GA", "AC"] <- 1.20; matrix_data["GA", "AG"] <- 0.25; matrix_data["GA", "AT"] <- 0.70
-  matrix_data["GA", "CA"] <- 0.70; matrix_data["GA", "CC"] <- 0.70; matrix_data["GA", "CG"] <- 0.70; matrix_data["GA", "CT"] <- -1.30
-  matrix_data["GA", "GA"] <- 1.50; matrix_data["GA", "GC"] <- 1.50; matrix_data["GA", "GG"] <- 1.20; matrix_data["GA", "GT"] <- 0.70
-  matrix_data["GA", "TA"] <- 0.90; matrix_data["GA", "TC"] <- 0.90; matrix_data["GA", "TG"] <- 0.90; matrix_data["GA", "TT"] <- 0.40
-  
-  matrix_data["GC", "AA"] <- 1.20; matrix_data["GC", "AC"] <- 1.20; matrix_data["GC", "AG"] <- 0.70; matrix_data["GC", "AT"] <- 1.20
-  matrix_data["GC", "CA"] <- 0.70; matrix_data["GC", "CC"] <- 0.70; matrix_data["GC", "CG"] <- -2.24; matrix_data["GC", "CT"] <- 0.70
-  matrix_data["GC", "GA"] <- 1.50; matrix_data["GC", "GC"] <- 1.50; matrix_data["GC", "GG"] <- 0.70; matrix_data["GC", "GT"] <- 1.20
-  matrix_data["GC", "TA"] <- 0.90; matrix_data["GC", "TC"] <- 0.90; matrix_data["GC", "TG"] <- 0.40; matrix_data["GC", "TT"] <- 0.90
-  
-  matrix_data["GG", "AA"] <- 1.20; matrix_data["GG", "AC"] <- 0.70; matrix_data["GG", "AG"] <- 1.20; matrix_data["GG", "AT"] <- 0.90
-  matrix_data["GG", "CA"] <- 0.70; matrix_data["GG", "CC"] <- -1.84; matrix_data["GG", "CG"] <- 0.70; matrix_data["GG", "CT"] <- 0.40
-  matrix_data["GG", "GA"] <- 1.20; matrix_data["GG", "GC"] <- 0.70; matrix_data["GG", "GG"] <- 0.59; matrix_data["GG", "GT"] <- 0.90
-  matrix_data["GG", "TA"] <- 0.90; matrix_data["GG", "TC"] <- 0.40; matrix_data["GG", "TG"] <- 0.90; matrix_data["GG", "TT"] <- 1.07
-  
-  matrix_data["GT", "AA"] <- 0.70; matrix_data["GT", "AC"] <- 1.20; matrix_data["GT", "AG"] <- 0.90; matrix_data["GT", "AT"] <- 1.20
-  matrix_data["GT", "CA"] <- -1.44; matrix_data["GT", "CC"] <- 0.70; matrix_data["GT", "CG"] <- 0.40; matrix_data["GT", "CT"] <- 0.70
-  matrix_data["GT", "GA"] <- 0.70; matrix_data["GT", "GC"] <- 1.20; matrix_data["GT", "GG"] <- 0.90; matrix_data["GT", "GT"] <- 1.50
-  matrix_data["GT", "TA"] <- 0.40; matrix_data["GT", "TC"] <- 0.90; matrix_data["GT", "TG"] <- 0.43; matrix_data["GT", "TT"] <- 0.90
-  
-  matrix_data["TA", "AA"] <- 0.70; matrix_data["TA", "AC"] <- 0.70; matrix_data["TA", "AG"] <- 0.70; matrix_data["TA", "AT"] <- -0.58
-  matrix_data["TA", "CA"] <- 1.20; matrix_data["TA", "CC"] <- 1.20; matrix_data["TA", "CG"] <- 1.20; matrix_data["TA", "CT"] <- 0.70
-  matrix_data["TA", "GA"] <- 0.90; matrix_data["TA", "GC"] <- 0.90; matrix_data["TA", "GG"] <- 0.90; matrix_data["TA", "GT"] <- 0.40
-  matrix_data["TA", "TA"] <- 1.50; matrix_data["TA", "TC"] <- 1.50; matrix_data["TA", "TG"] <- 1.20; matrix_data["TA", "TT"] <- 0.70
-  
-  matrix_data["TC", "AA"] <- 0.70; matrix_data["TC", "AC"] <- 0.70; matrix_data["TC", "AG"] <- -1.50; matrix_data["TC", "AT"] <- 0.70
-  matrix_data["TC", "CA"] <- 1.20; matrix_data["TC", "CC"] <- 1.20; matrix_data["TC", "CG"] <- 0.70; matrix_data["TC", "CT"] <- 0.88
-  matrix_data["TC", "GA"] <- 0.90; matrix_data["TC", "GC"] <- 0.90; matrix_data["TC", "GG"] <- 0.40; matrix_data["TC", "GT"] <- 0.90
-  matrix_data["TC", "TA"] <- 1.50; matrix_data["TC", "TC"] <- 1.50; matrix_data["TC", "TG"] <- 0.70; matrix_data["TC", "TT"] <- 1.20
-  
-  matrix_data["TG", "AA"] <- 0.70; matrix_data["TG", "AC"] <- -1.50; matrix_data["TG", "AG"] <- 0.70; matrix_data["TG", "AT"] <- 0.40
-  matrix_data["TG", "CA"] <- 1.20; matrix_data["TG", "CC"] <- 0.70; matrix_data["TG", "CG"] <- 1.20; matrix_data["TG", "CT"] <- 0.90
-  matrix_data["TG", "GA"] <- 0.90; matrix_data["TG", "GC"] <- 0.40; matrix_data["TG", "GG"] <- 0.90; matrix_data["TG", "GT"] <- 0.34
-  matrix_data["TG", "TA"] <- 1.20; matrix_data["TG", "TC"] <- 0.70; matrix_data["TG", "TG"] <- 1.50; matrix_data["TG", "TT"] <- 0.90
-  
-  matrix_data["TT", "AA"] <- -1.50; matrix_data["TT", "AC"] <- 0.70; matrix_data["TT", "AG"] <- 0.40; matrix_data["TT", "AT"] <- 0.70
-  matrix_data["TT", "CA"] <- 0.70; matrix_data["TT", "CC"] <- 1.20; matrix_data["TT", "CG"] <- 0.90; matrix_data["TT", "CT"] <- 1.20
-  matrix_data["TT", "GA"] <- 0.40; matrix_data["TT", "GC"] <- 0.90; matrix_data["TT", "GG"] <- 0.98; matrix_data["TT", "GT"] <- 0.90
-  matrix_data["TT", "TA"] <- 0.70; matrix_data["TT", "TC"] <- 1.20; matrix_data["TT", "TG"] <- 0.90; matrix_data["TT", "TT"] <- 0.86
-  
-  return(matrix_data)
+  # Return the matrix
+  return(values)
 }
 
 # Reverse complement function using vectorized lookup
@@ -165,11 +108,11 @@ expand_primer <- function(p1){
   }
 }
 
-weight_function <- function(x, primer_length, rev = FALSE, max_weight = 5){
+weight_function <- function(x, primer_length, rev = FALSE, max_weight = 5, min_weight = 0){
   # x is the distance from the 3' end of primer
   # primer_length is the length of the primer
   # rev is a logical indicating if the primer being evaluated in reverse direction
-  # returns a weight for the primer at position x
+  # returns a weight for the binding energy at position x
   a <- -(primer_length - 5)
   b <- 1
   
@@ -180,13 +123,14 @@ weight_function <- function(x, primer_length, rev = FALSE, max_weight = 5){
   }
   # sigmoidal weighting function
   return(
-    1 + ((max_weight-1)*exp(a+b*w)/
+    min_weight + ((max_weight)*exp(a+b*w)/
            (1+exp(a+b*w)))
   ) 
 }
 
 get_binding_energy <- function(p1, t1, rev = FALSE) {
   # NOTE: handles ambiguities in the primer, but not in the template
+  # NOTE: primer is handled in the 5' - 3' orientation
   
   comp_template <- complement(t1)
   p1 <- expand_primer(p1)
