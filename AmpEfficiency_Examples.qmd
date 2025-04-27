@@ -46,19 +46,15 @@ species_templates <- fa[match(species_names, taxbase$species)]
 
 Additive model of binding energy
 
-MM penalty exponential as approaching the 3' end
+MM penalty sigmoidally increase as approaching the 3' end
 
-dinucleotide MM penalties given by nearest neighbor (SantaLucia)
+trinucleotide binding energies given by nearest neighbor (SantaLucia and Hicks 2004, Hooyberghs et al 2009)
 
 ambiguities in primers averaged over
 
-The binding-energy model is as follows:
-
-ΔG(i) = ΔG_dinucleotide_bases + P_3prime
-
 DeltaG is first calculated in absolute terms, and then within a set of observations, scaled by subtracting the minimum observed deltaG across taxa. Gamma = deltaG - min(deltaG), such that the taxon w min binding energy has gamma = 0.
 
-We then calibrate the slope of the relationship between alpha (amplification efficiency sensu Shelton et al. 2022) and gamma by fitting a linear model relating the two and constraining the intercept to be zero (such that, within a set of observations, the max amp efficiency occurs in the taxon with minimum binding energy). We then use the resulting slope to map the value of deltaG for any given taxon onto a predicted amplification efficiency, alpha.
+We then calibrate the slope of the relationship between alpha (amplification efficiency sensu Shelton et al. 2022) and gamma by fitting a linear model relating the two and constraining the intercept to be zero (such that, within a set of observations, the max amp efficiency occurs in the taxon with minimum binding energy). We then use the resulting slope to map the value of Gamma for any given taxon onto a predicted amplification efficiency, alpha.
 
 We can do this across vertebrate taxa, for example, to estimate the amp efficiencies of any given taxon or group, relative to one with perfect amp efficiency.
 
@@ -93,7 +89,7 @@ filter(!is.na(class),
     ggtitle("MarVer")
 ```
 
-A worked example of observed vs expected proportions
+### A worked example of observed vs expected proportions using simulated data.
 
 Black dots indicate observed proportions within a sample; colored dots represent values corrected for amplification bias. Error bars represent approx. 95% CI given a standard error of 0.01 on alpha estimates.
 
@@ -124,6 +120,10 @@ q$estimated_proportions %>%
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 ```
+
+### A worked example using real data
+
+Mock communities (Shaffer et al. 2025, Yamanaka et al. in prep)
 
 ### TO DO:
 
