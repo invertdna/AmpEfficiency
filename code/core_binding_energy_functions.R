@@ -202,7 +202,7 @@ weight_function <- function(x, primer_length, rev = FALSE, max_weight = 5, min_w
   }
   # sigmoidal weighting function
   return(
-    min_weight + ((max_weight)*exp(a+b*w)/
+    min_weight + ((max_weight - min_weight)*exp(a+b*w)/
            (1+exp(a+b*w)))
   ) 
 }
@@ -250,8 +250,21 @@ get_triplet_binding_energy <- function(primer, template, binding_energy_mat = m,
   
 m <- create_binding_energy_matrix() #units kcal/mol at 37C
 
-#TODO
-# separate delta H and delta S components, so as to handle variable salt and MgCl2 conditions
+specificity_score <- function(g_vec){
+  #for a vector of binding energies, sort and give (1 - ratio of probs of two lowest-energy scores), such that 
+  #a specificity score of 0 means no difference between the two lowest scores, and 1 means unambiguous binding to lowest
+  
+  names(g_vec) <- 1:length(g_vec) #create index, storing info as names in vector
+  g_vec <- sort(g_vec) #sort
+  g_vec_mean <- mean(g_vec)
+  g_vec_sd <- sd(g_vec)
+  p1 <- pnorm(g_vec[1], g_vec_mean, g_vec_sd)
+  p2 <- pnorm(g_vec[2], g_vec_mean, g_vec_sd)
+  
+  return(
+    1 - ((p2 - p1)/p2)
+  )
+}
 
 predict_binding <- function(forward_primer, reverse_primer, template){
   
@@ -273,13 +286,17 @@ predict_binding <- function(forward_primer, reverse_primer, template){
   
   #forward primer positions
   g_vec_fwd <- get_triplet_binding_energy(forward_primer, template, binding_energy_mat = m)
+  fwd_specificity <- specificity_score(g_vec_fwd)
   
   #reverse primer positions
   g_vec_rev <- get_triplet_binding_energy(reverse_primer, template, binding_energy_mat = m, REV = TRUE)
+  rev_specificity <- specificity_score(g_vec_rev)
   
   #output
   best_forward_binding_position <- which(g_vec_fwd == min(g_vec_fwd)) #keeps both in case of ties
+
   best_reverse_binding_position <- which(g_vec_rev == min(g_vec_rev))
+
   overall_binding_energy <- g_vec_fwd[best_forward_binding_position[1]] + g_vec_rev[best_reverse_binding_position[1]]
   amplicon_size_w_primers <- ((best_reverse_binding_position + nchar(reverse_primer)) - 
                                 (best_forward_binding_position)) 
@@ -290,13 +307,16 @@ predict_binding <- function(forward_primer, reverse_primer, template){
                                 (best_reverse_binding_position[1] - 1)) #only keeps first, if there are multiple
   
   return(list("best_forward_binding_position" = best_forward_binding_position,
+              "forward_specificity" = unname(fwd_specificity),
+              "reverse_specificity" = unname(rev_specificity),
+              "warnings" = ifelse(unname(fwd_specificity) < 0.05 & unname(rev_specificity) < 0.05, #if second-best binding is more than 1/20th prob of best binding site, warn.
+                                  "NONE", "Potential nonspecific binding"),
               "best_reverse_binding_position" = best_reverse_binding_position,
               "overall_binding_energy" = overall_binding_energy,
-              "amplicon_size_w_primers" = amplicon_size_w_primers,
-              "amplicon_size_no_primers" = amplicon_size_no_primers,
-              "amplicon_w_primers" = amplicon_w_primers,
-              "amplicon_no_primers" = amplicon_no_primers))
-  
+              "amplicon_size_w_primers" = ifelse(amplicon_size_w_primers > 0 & overall_binding_energy < 50, amplicon_size_w_primers, NA),
+              "amplicon_size_no_primers" = ifelse(amplicon_size_no_primers > 0 & overall_binding_energy < 50, amplicon_size_no_primers, NA),
+              "amplicon_w_primers" = ifelse(amplicon_size_w_primers > 0 & overall_binding_energy < 50, amplicon_w_primers, NA),
+              "amplicon_no_primers" = ifelse(amplicon_size_no_primers > 0 & overall_binding_energy < 50, amplicon_no_primers, NA)))
 }
 
 #example
@@ -393,13 +413,13 @@ amplicon_length_distribution <- function(results_list, minlength = 100, maxlengt
 #amplicon_length_distribution(res, 100, 300) %>% hist()
 
 #given alphas and a vector of reads, estimate true proportions
-estimate_proportions <- function(Nreads_vec, alphas, Npcr = 40){
-  ref_species <- which.max(alphas)
-  nu <- log(Nreads_vec/Nreads_vec[ref_species])
-  theta <- nu - (Npcr * alphas) 
-  p <- exp(theta)/sum(exp(theta))
-  return(p)
-}
+# estimate_proportions <- function(Nreads_vec, alphas, Npcr = 40){
+#   ref_species <- which.max(alphas)
+#   nu <- log(Nreads_vec/Nreads_vec[ref_species])
+#   theta <- nu - (Npcr * alphas) 
+#   p <- exp(theta)/sum(exp(theta))
+#   return(p)
+# }
 
 get_alpha <- function(gamma, slope = -0.003, slope_se = 0.0006){
   #where gamma is the difference between observed deltaG and min deltaG for the primer/template pair
@@ -412,8 +432,19 @@ get_alpha <- function(gamma, slope = -0.003, slope_se = 0.0006){
 #get_alpha(gamma = -15)
 
 estimate_proportions <- function(Nreads_vec, alphas, Npcr = 40, uncertainty = FALSE){
-  ref_species <- which.max(alphas)
-  nu <- log(Nreads_vec/Nreads_vec[ref_species])
+  require(dplyr)
+  
+  #select as reference species the one w the highest alpha and greatest number of reads
+  ref_species <- data.frame(
+    idx = 1:length(alphas),
+    alphas, 
+    Nreads_vec
+  ) %>% 
+    filter(Nreads_vec > 0) %>% 
+    arrange(desc(alphas), desc(Nreads_vec)) %>% 
+    pull(idx) %>% 
+    nth(1)
+  nu <- log(unlist(Nreads_vec)/unlist(Nreads_vec)[ref_species])
   p_df <- matrix(NA, nrow = 1000, ncol = length(alphas))
   if(!uncertainty){
     theta <- nu - (Npcr * alphas) 
@@ -470,7 +501,8 @@ correct_proportions <- function(Nreads_matrix, #m x n matrix of read counts, wit
     
     print(paste("Calculating binding energy for species", species_names[i]))
     
-    binding_energies[i] <- predict_binding(forward_primer, reverse_primer, template = as.character(species_templates[i]))$overall_binding_energy    
+    binding_energies[i] <- predict_binding(forward_primer, reverse_primer, 
+                                           template = as.character(species_templates[i]))$overall_binding_energy    
   }
   
   #calculate amp efficiency, given binding energies, relative to minimum binding energy observed
@@ -486,7 +518,7 @@ correct_proportions <- function(Nreads_matrix, #m x n matrix of read counts, wit
   
   
   for (i in 1:ncol(Nreads_matrix)){
-    tmp <- estimate_proportions(Nreads_vec = Nreads_matrix[,i],
+    tmp <- estimate_proportions(Nreads_vec = as.vector(Nreads_matrix[,i]),
                                 alphas = alpha_vector,
                                 Npcr = Npcr,
                                 uncertainty = T)
