@@ -268,6 +268,10 @@ specificity_score <- function(g_vec){
 
 predict_binding <- function(forward_primer, reverse_primer, template){
   
+  # if(!is.character(template)){
+  #   return(NA)
+  # } else {
+    
   #check input
   Nidx <- which(!strsplit(template, split ="")[[1]] %in% c("A","G","C","T"))
   
@@ -310,11 +314,12 @@ predict_binding <- function(forward_primer, reverse_primer, template){
                                   "NONE", "Potential nonspecific binding"),
               "best_reverse_binding_position" = best_reverse_binding_position,
               "overall_binding_energy" = overall_binding_energy,
-              "amplicon_size_w_primers" = ifelse(amplicon_size_w_primers > 0 & overall_binding_energy < 50, nchar(amplicon_w_primers), NA),
-              "amplicon_size_no_primers" = ifelse(amplicon_size_no_primers > 0 & overall_binding_energy < 50, nchar(amplicon_no_primers), NA),
-              "amplicon_w_primers" = ifelse(amplicon_size_w_primers > 0 & overall_binding_energy < 50, amplicon_w_primers, NA),
-              "amplicon_no_primers" = ifelse(amplicon_size_no_primers > 0 & overall_binding_energy < 50, amplicon_no_primers, NA)))
-}
+              "amplicon_size_w_primers" = ifelse(nchar(amplicon_w_primers) > 0 & overall_binding_energy < 50, nchar(amplicon_w_primers), NA),
+              "amplicon_size_no_primers" = ifelse(nchar(amplicon_no_primers) > 0 & overall_binding_energy < 50, nchar(amplicon_no_primers), NA),
+              "amplicon_w_primers" = ifelse(nchar(amplicon_w_primers) > 0 & overall_binding_energy < 50, amplicon_w_primers, NA),
+              "amplicon_no_primers" = ifelse(nchar(amplicon_no_primers) > 0 & overall_binding_energy < 50, amplicon_no_primers, NA)))
+  }
+
 
 #example
 # predict_binding(
