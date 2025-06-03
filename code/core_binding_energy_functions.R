@@ -298,12 +298,9 @@ predict_binding <- function(forward_primer, reverse_primer, template){
   best_reverse_binding_position <- which(g_vec_rev == min(g_vec_rev))
 
   overall_binding_energy <- g_vec_fwd[best_forward_binding_position[1]] + g_vec_rev[best_reverse_binding_position[1]]
-  amplicon_size_w_primers <- ((best_reverse_binding_position + nchar(reverse_primer)) - 
-                                (best_forward_binding_position)) 
-  amplicon_size_no_primers <- amplicon_size_w_primers - nchar(forward_primer) - nchar(reverse_primer)
   amplicon_w_primers <- substr(template, best_forward_binding_position[1], 
                                (best_reverse_binding_position[1] + nchar(reverse_primer) - 1)) #only keeps first, if there are multiple
-  amplicon_no_primers <- substr(template, (best_forward_binding_position[1] + 1), 
+  amplicon_no_primers <- substr(template, (best_forward_binding_position[1] + nchar(forward_primer)), 
                                 (best_reverse_binding_position[1] - 1)) #only keeps first, if there are multiple
   
   return(list("best_forward_binding_position" = best_forward_binding_position,
@@ -313,8 +310,8 @@ predict_binding <- function(forward_primer, reverse_primer, template){
                                   "NONE", "Potential nonspecific binding"),
               "best_reverse_binding_position" = best_reverse_binding_position,
               "overall_binding_energy" = overall_binding_energy,
-              "amplicon_size_w_primers" = ifelse(amplicon_size_w_primers > 0 & overall_binding_energy < 50, amplicon_size_w_primers, NA),
-              "amplicon_size_no_primers" = ifelse(amplicon_size_no_primers > 0 & overall_binding_energy < 50, amplicon_size_no_primers, NA),
+              "amplicon_size_w_primers" = ifelse(amplicon_size_w_primers > 0 & overall_binding_energy < 50, nchar(amplicon_w_primers), NA),
+              "amplicon_size_no_primers" = ifelse(amplicon_size_no_primers > 0 & overall_binding_energy < 50, nchar(amplicon_no_primers), NA),
               "amplicon_w_primers" = ifelse(amplicon_size_w_primers > 0 & overall_binding_energy < 50, amplicon_w_primers, NA),
               "amplicon_no_primers" = ifelse(amplicon_size_no_primers > 0 & overall_binding_energy < 50, amplicon_no_primers, NA)))
 }
@@ -488,7 +485,8 @@ correct_proportions <- function(Nreads_matrix, #m x n matrix of read counts, wit
                                 species_templates, # vector of DNA template sequences against which to compare primers
                                 forward_primer, # forward primer sequence, character vector
                                 reverse_primer, # reverse primer sequence, character vector
-                                Npcr = 40 # number of PCR cycles
+                                Npcr = 40, # number of PCR cycles
+                                slope = -0.003 #slope to estimate alpha (log-ratio amp eff) given gamma (binding energy delta delta G relative to perfect binding)
 ){
   
   require(tidyverse)
@@ -508,7 +506,7 @@ correct_proportions <- function(Nreads_matrix, #m x n matrix of read counts, wit
   #calculate amp efficiency, given binding energies, relative to minimum binding energy observed
   
   gamma_vector <- binding_energies - min(binding_energies) #relative binding energy
-  alpha_vector <- get_alpha(gamma_vector)$est_alpha #log-ratio amp efficiency; use means as point estimate
+  alpha_vector <- get_alpha(gamma_vector, slope = slope)$est_alpha #log-ratio amp efficiency; use means as point estimate
   
   # given alphas, estimate species' DNA proportions
   
